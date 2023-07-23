@@ -1,0 +1,86 @@
+###HOW AND WHY THIS REPO CREATED###
+This repository created to use future backend development systems, it has basic paths and as a big plus hot-reload is enabled.
+>touch docker-compose.yml
+>touch Dockerfile (and fill them)
+
+>docker compose up
+>docker compose run --service-ports web bash (enter inside of composed file)
+
+>go mod init github.com/efealtar/gofib
+>go get github.com/gofiber/fiber/v2
+
+>mkdir cmd (to hold on main package)
+>touch cmd/main.go (copy and paste go fiber "hello world" inside it)
+
+>go run cmd/main.go -b 0.0.0.0 (with binding 0s browser will know how to talk at port 3000)
+
+(to stop instead of running everytime after making change go dockerfile and add:)
+Dockerfile> COPY . .
+            RUN go mod tidy(ensures each time all necessary packages are installed)
+
+docker-compose> command: go run cmd/main.go -b 0.0.0.0 (every docker compose up it will run)
+(now with exit command we can exit inside of compose file and by running docker compose up it will do everything)
+>exit
+>docker compose up
+
+########HOT RELOAD WITH AIR########
+(We can see at port:3000 this "hello world" but there is no hot reload when we make change in our file, to implement:)
+
+Dockerfile> RUN go install github.com/cosmtrek/air@latest(before COPY)
+>touch .air.toml (config file for air package inside of it will be copied from github repo)
+([build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "go build -o ./tmp/main ./cmd" only change here to cmd because our main file inside of cmd
+and inside of docker-compose file change go run with air:
+command: air cmd/main.go -b 0.0.0.0 #each time docker compose up, it will run this command)
+
+>docker compose build (we should rebuild to activate air)
+>docker compose up (hot reload enabled)
+
+########ADDING POSTGRES SERVICE########
+(first add env_file )
+docker-compose>env_file:
+                  - .env
+>touch .env (env vars added there)
+docker-compose:
+  db:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+
+volumes: # add named variables to the volumes, it can only be deleted manually
+  postgres_db:
+
+(we will use GORM here:)
+>docker compose run --service-ports web bash
+>go get gorm.io/gorm
+>go get gorm.io/driver/postgres
+>mkdir models (ORM allow us manipulate the data in database in OO way, with gorm go structs used to represent objects)
+(these objects also be described as models)
+>touch models/models.go
+
+(to connect database)
+>mkdir database
+>touch database/database.go
+(after writing db connection head to main.go and add db connection)
+
+
+##########ROUTES & ENDPOINTS##########
+>touch cmd/routes.go (move routes there, its part of main package)
+
+>mkdir handlers
+>touch handlers/facts.go (use handlers at routes)
+>exit 
+
+>docker compose up
+
+(postman dan http://localhost:3000 get request ile cevap alinir)
+
+#########INSERING WITH POST REQUEST#########
+(handler and routes written)
